@@ -5,7 +5,9 @@ import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.common.serialization.IntegerDeserializer
 import org.apache.kafka.common.serialization.StringDeserializer
 import org.springframework.stereotype.Component
+import reactor.kafka.receiver.KafkaReceiver
 import reactor.kafka.receiver.ReceiverOptions
+import java.util.Properties
 
 
 @Component
@@ -13,19 +15,24 @@ class ConsumerMan {
 
     @PostConstruct
     fun asd() {
+        val props = Properties()
 
-        println("hello")
-//        val props: Map<String, Any> = HashMap()
-//        props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers)
-//        props.put(ConsumerConfig.CLIENT_ID_CONFIG, "sample-consumer")
-//        props.put(ConsumerConfig.GROUP_ID_CONFIG, "sample-group")
-//        props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, IntegerDeserializer::class.java)
-//        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer::class.java)
-//        props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest")
-//        receiverOptions = ReceiverOptions.create(props)
-//        dateFormat = DateTimeFormatter.ofPattern("HH:mm:ss:SSS z dd MMM yyyy")
+        props[ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG] = "localhost:9092"
+        props[ConsumerConfig.CLIENT_ID_CONFIG] = "sample-consumer"
+        props[ConsumerConfig.GROUP_ID_CONFIG] = "sample-group"
+        props[ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG] = IntegerDeserializer::class.java
+        props[ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG] = StringDeserializer::class.java
+        props[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "earliest"
 
+        val receiverOptions = ReceiverOptions.create<String, Any>(props)
+                .subscription(listOf("example-topic"))
 
+        KafkaReceiver.create(receiverOptions)
+                .receive()
+                .map {
+                    println(it.value())
+                }
+                .subscribe()
     }
 
 }
